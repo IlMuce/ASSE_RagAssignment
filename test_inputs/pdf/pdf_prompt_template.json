@@ -1,0 +1,7 @@
+{
+  "pdf_path": "C:\\Users\\denis\\Desktop\\ASSE\\ASSE_RagAssignment\\test_inputs\\pdf\\your_chapter.pdf",
+  "user_query": "Replace this with a detailed question about your PDF.",
+  "top_k": 3,
+  "chunk_size": 180,
+  "chunk_overlap": 40
+}

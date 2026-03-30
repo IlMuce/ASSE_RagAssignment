@@ -1,5 +1,6 @@
 import argparse
 import json
+import sys
 
 import chromadb
 import ollama
@@ -8,17 +9,21 @@ import ollama
 DEFAULT_EMBEDDING_MODEL = "qwen3-embedding:0.6b"
 DEFAULT_LLM_MODEL = "deepseek-r1:1.5b"
 DEFAULT_INPUT_FILE = "rag_input.json"
-DEFAULT_TOP_K = 3
+
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8")
 
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Run a Top-K local RAG demo with Ollama and ChromaDB."
+        description="Run the base local RAG demo with Ollama and ChromaDB."
     )
     parser.add_argument("--input-file", default=DEFAULT_INPUT_FILE)
     parser.add_argument("--embedding-model", default=DEFAULT_EMBEDDING_MODEL)
     parser.add_argument("--llm-model", default=DEFAULT_LLM_MODEL)
-    parser.add_argument("--top-k", type=int, default=DEFAULT_TOP_K)
     return parser.parse_args()
 
 
@@ -38,8 +43,6 @@ def reset_collection(client, name):
 def embed_and_store_documents(collection, documents, embedding_model):
     for index, document in enumerate(documents):
         response = ollama.embed(model=embedding_model, input=document)
-
-        # Each document gets a stable string id so Chroma can retrieve it later.
         collection.add(
             ids=[str(index)],
             embeddings=response["embeddings"],
@@ -47,24 +50,19 @@ def embed_and_store_documents(collection, documents, embedding_model):
         )
 
 
-def retrieve_context(collection, user_query, embedding_model, top_k):
+def retrieve_context(collection, user_query, embedding_model):
     query_embedding = ollama.embed(model=embedding_model, input=user_query)
     results = collection.query(
         query_embeddings=query_embedding["embeddings"],
-        n_results=top_k,
+        n_results=1,
     )
-    return results["documents"][0]
+    return results["documents"][0][0]
 
 
-def build_rag_prompt(user_query, retrieved_docs):
-    # The model now receives multiple relevant documents instead of only one.
-    formatted_context = "\n\n".join(
-        f"[Context {index}] {document}"
-        for index, document in enumerate(retrieved_docs, start=1)
-    )
+def build_rag_prompt(user_query, retrieved_doc):
     return (
         "Answer the question using only the following context.\n\n"
-        f"{formatted_context}\n\n"
+        f"Context: {retrieved_doc}\n\n"
         f"Question: {user_query}"
     )
 
@@ -72,16 +70,14 @@ def build_rag_prompt(user_query, retrieved_docs):
 def main():
     args = parse_args()
     data = load_input_file(args.input_file)
-
     documents = data["documents"]
     user_query = data["user_query"]
-    top_k = max(1, min(args.top_k, len(documents)))
 
-    print("=== TOP-K RAG DEMO START ===\n")
+    print("=== RAG DEMO START ===\n")
 
     print("[1/6] Creating vector collection...")
     client = chromadb.Client()
-    collection = reset_collection(client, "docs_top_k")
+    collection = reset_collection(client, "docs")
     print("[1/6] Collection ready.\n")
 
     print("[2/6] Embedding and indexing documents...")
@@ -100,14 +96,16 @@ def main():
     print(output_no_rag["response"])
     print()
 
-    print("[5/6] Retrieving Top-K context...")
-    retrieved_docs = retrieve_context(collection, user_query, args.embedding_model, top_k)
+    # The base version deliberately retrieves only one document so that Part 2
+    # can compare this limitation against the improved Top-K approach.
+    print("[5/6] Generating query embedding and retrieving context...")
+    retrieved_doc = retrieve_context(collection, user_query, args.embedding_model)
     print("[5/6] Retrieval completed.\n")
     print("----- RETRIEVED CONTEXT -----")
-    for index, document in enumerate(retrieved_docs, start=1):
-        print(f"[Context {index}] {document}\n")
+    print(retrieved_doc)
+    print()
 
-    rag_prompt = build_rag_prompt(user_query, retrieved_docs)
+    rag_prompt = build_rag_prompt(user_query, retrieved_doc)
 
     print("[6/6] Running LLM with RAG...")
     print("----- RAG PROMPT -----")
@@ -120,7 +118,7 @@ def main():
     print(output_rag["response"])
     print()
 
-    print("=== TOP-K RAG DEMO END ===")
+    print("=== RAG DEMO END ===")
 
 
 if __name__ == "__main__":

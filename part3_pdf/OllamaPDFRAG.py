@@ -1,5 +1,6 @@
 import argparse
 import json
+import sys
 from pathlib import Path
 
 import chromadb
@@ -17,6 +18,12 @@ DEFAULT_INPUT_FILE = "pdf_rag_input.json"
 DEFAULT_TOP_K = 3
 DEFAULT_CHUNK_SIZE = 180
 DEFAULT_CHUNK_OVERLAP = 40
+
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8")
 
 
 def parse_args():

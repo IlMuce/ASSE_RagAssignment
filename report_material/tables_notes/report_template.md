@@ -2,9 +2,9 @@
 
 ## 1. Overview
 
-- Base script analyzed: `base_script/OllamaSimpleRAG.py`
-- Improved Top-K version: `topl_version/OllamaTopKRAG.py`
-- PDF ingestion version: `pdf_version/OllamaPDFRAG.py`
+- Base script analyzed: `part1_base/OllamaSimpleRAG.py`
+- Improved Top-K version: `part2_topk/OllamaTopKRAG.py`
+- PDF ingestion version: `part3_pdf/OllamaPDFRAG.py`
 - Tested PDF:
 - Selected prompts:
 
