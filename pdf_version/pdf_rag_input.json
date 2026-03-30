@@ -1,0 +1,7 @@
+{
+  "pdf_path": "C:\\Users\\denis\\Desktop\\ASSE\\slides\\Lesson 02 - Large Language Models Training.pdf",
+  "user_query": "What is the difference between pretraining and fine-tuning, and why are both important in LLM development?",
+  "top_k": 3,
+  "chunk_size": 180,
+  "chunk_overlap": 40
+}

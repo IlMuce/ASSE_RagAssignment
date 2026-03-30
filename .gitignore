@@ -1,0 +1,24 @@
+# Python cache / build artifacts
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDE / editor files
+.idea/
+.vscode/
+
+# Local environment files
+.env
+
+# RAG / experiment outputs
+outputs/
+
+# Local vector DB artifacts if persistent storage is enabled later
+chroma/
+chroma_db/
+*.sqlite3
