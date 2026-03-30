@@ -1,0 +1,7 @@
+{
+  "pdf_path": "C:\\Users\\denis\\Desktop\\ASSE\\ASSE_RagAssignment\\test_inputs\\pdf\\chapter5_network_security_qos.pdf",
+  "user_query": "How were the QoS tests performed, and what did they show about the Fortinet policies under heavy load?",
+  "top_k": 3,
+  "chunk_size": 180,
+  "chunk_overlap": 40
+}

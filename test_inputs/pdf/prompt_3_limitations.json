@@ -1,0 +1,7 @@
+{
+  "pdf_path": "C:\\Users\\denis\\Desktop\\ASSE\\ASSE_RagAssignment\\test_inputs\\pdf\\chapter4_acc_totem.pdf",
+  "user_query": "What are the main limitations or critical issues of the ACC Totem system, and which mitigation measures were adopted?",
+  "top_k": 3,
+  "chunk_size": 180,
+  "chunk_overlap": 40
+}

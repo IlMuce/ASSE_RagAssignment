@@ -1,0 +1,7 @@
+{
+  "pdf_path": "C:\\Users\\denis\\Desktop\\ASSE\\ASSE_RagAssignment\\test_inputs\\pdf\\chapter4_acc_totem.pdf",
+  "user_query": "How does ACC Totem reduce manual work for operators, from race configuration to simulator auto-join?",
+  "top_k": 3,
+  "chunk_size": 180,
+  "chunk_overlap": 40
+}

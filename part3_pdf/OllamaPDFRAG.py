@@ -1,10 +1,13 @@
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 
 import chromadb
 import ollama
+from dotenv import load_dotenv
+from openai import OpenAI
 
 try:
     from pypdf import PdfReader
@@ -18,6 +21,8 @@ DEFAULT_INPUT_FILE = "pdf_rag_input.json"
 DEFAULT_TOP_K = 3
 DEFAULT_CHUNK_SIZE = 180
 DEFAULT_CHUNK_OVERLAP = 40
+DEFAULT_PROVIDER = "ollama"
+GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"
 
 
 if hasattr(sys.stdout, "reconfigure"):
@@ -33,6 +38,9 @@ def parse_args():
     parser.add_argument("--input-file", default=DEFAULT_INPUT_FILE)
     parser.add_argument("--embedding-model", default=DEFAULT_EMBEDDING_MODEL)
     parser.add_argument("--llm-model", default=DEFAULT_LLM_MODEL)
+    parser.add_argument("--provider", default=DEFAULT_PROVIDER, choices=["ollama", "gemini"])
+    parser.add_argument("--api-env-file", default="")
+    parser.add_argument("--temperature", type=float, default=0.2)
     parser.add_argument("--top-k", type=int, default=None)
     parser.add_argument("--chunk-size", type=int, default=None)
     parser.add_argument("--chunk-overlap", type=int, default=None)
@@ -42,6 +50,24 @@ def parse_args():
 def load_input_file(path):
     with open(path, "r", encoding="utf-8") as file:
         return json.load(file)
+
+
+def load_api_environment(api_env_file):
+    if api_env_file:
+        load_dotenv(api_env_file, override=False)
+
+
+def build_generation_client(provider):
+    if provider == "ollama":
+        return None
+
+    api_key = os.getenv("GEMINI_API_KEY", "")
+    if not api_key:
+        raise ValueError(
+            "Missing GEMINI_API_KEY. Set it in the environment or pass --api-env-file."
+        )
+
+    return OpenAI(api_key=api_key, base_url=GEMINI_BASE_URL)
 
 
 def normalize_whitespace(text):
@@ -111,6 +137,8 @@ def embed_and_store_chunks(collection, chunks, embedding_model):
 
 def retrieve_context(collection, user_query, embedding_model, top_k):
     query_embedding = ollama.embed(model=embedding_model, input=user_query)
+    # PDF retrieval follows the same Top-K idea as Part 2, but now the indexed
+    # units are text chunks extracted from the PDF instead of full JSON documents.
     return collection.query(
         query_embeddings=query_embedding["embeddings"],
         n_results=top_k,
@@ -118,6 +146,8 @@ def retrieve_context(collection, user_query, embedding_model, top_k):
 
 
 def build_rag_prompt(user_query, retrieved_docs):
+    # The final prompt keeps the retrieved chunks in ranking order so the model
+    # can combine evidence coming from different PDF sections.
     formatted_context = "\n\n".join(
         f"[Context {index}] {document}"
         for index, document in enumerate(retrieved_docs, start=1)
@@ -129,8 +159,29 @@ def build_rag_prompt(user_query, retrieved_docs):
     )
 
 
+def build_messages(provider, model, prompt):
+    if provider == "gemini" and "gemma" in model.lower():
+        return [{"role": "user", "content": prompt}]
+
+    return [{"role": "user", "content": prompt}]
+
+
+def generate_text(provider, model, prompt, temperature, client):
+    if provider == "ollama":
+        return ollama.generate(model=model, prompt=prompt)["response"]
+
+    response = client.chat.completions.create(
+        model=model,
+        messages=build_messages(provider, model, prompt),
+        temperature=temperature,
+    )
+    return response.choices[0].message.content.strip()
+
+
 def main():
     args = parse_args()
+    load_api_environment(args.api_env_file)
+    generation_client = build_generation_client(args.provider)
     data = load_input_file(args.input_file)
 
     pdf_path = Path(data["pdf_path"])
@@ -151,6 +202,7 @@ def main():
     chunks = extract_pdf_chunks(pdf_path, chunk_size, chunk_overlap)
     if not chunks:
         raise ValueError("No text chunks were extracted from the PDF.")
+    top_k = max(1, min(top_k, len(chunks)))
     print(f"[1/7] Extracted {len(chunks)} chunks from {pdf_path.name}.\n")
 
     print("[2/7] Creating vector collection...")
@@ -169,10 +221,16 @@ def main():
     print()
 
     print("[5/7] Running LLM without RAG...")
-    output_no_rag = ollama.generate(model=args.llm_model, prompt=user_query)
+    output_no_rag = generate_text(
+        args.provider,
+        args.llm_model,
+        user_query,
+        args.temperature,
+        generation_client,
+    )
     print("[5/7] LLM response without RAG completed.\n")
     print("----- RESPONSE WITHOUT RAG -----")
-    print(output_no_rag["response"])
+    print(output_no_rag)
     print()
 
     print("[6/7] Retrieving Top-K PDF context...")
@@ -197,10 +255,16 @@ def main():
     print(rag_prompt)
     print()
 
-    output_rag = ollama.generate(model=args.llm_model, prompt=rag_prompt)
+    output_rag = generate_text(
+        args.provider,
+        args.llm_model,
+        rag_prompt,
+        args.temperature,
+        generation_client,
+    )
     print("[7/7] LLM response with RAG completed.\n")
     print("----- RESPONSE WITH RAG -----")
-    print(output_rag["response"])
+    print(output_rag)
     print()
 
     print("=== PDF RAG DEMO END ===")

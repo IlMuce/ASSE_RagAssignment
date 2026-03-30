@@ -1,0 +1,7 @@
+{
+  "pdf_path": "C:\\Users\\denis\\Desktop\\ASSE\\ASSE_RagAssignment\\test_inputs\\pdf\\chapter5_network_security_qos.pdf",
+  "user_query": "What vulnerabilities were found on the Windows endpoint and on the Cisco switch, and what hardening measures were proposed for each?",
+  "top_k": 3,
+  "chunk_size": 180,
+  "chunk_overlap": 40
+}

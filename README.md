@@ -12,6 +12,8 @@ This repository is organized to mirror the three parts of Assignment 2 from Less
 - `outputs/`: local folder used to store experiment logs generated while running the scripts. It is created and filled during execution and is not part of the final required deliverables.
 - `report_material/tables_notes/report_template.md`: draft structure for the 3-4 page report.
 
+The files `rag_input.json` inside `part1_base/` and `part2_topk/`, and `pdf_rag_input.json` inside `part3_pdf/`, are standalone example inputs kept as local defaults for direct script execution. The actual Part 1 and Part 2 experiments for the report use the JSON files in `test_inputs/json_cases/`.
+
 ## Setup
 
 Create and use a local virtual environment:
@@ -32,6 +34,10 @@ ollama pull llama3.1:8b
 ```
 
 `qwen3.5:9b` is optional and should be used only if available on your machine.
+
+Optional:
+
+- To test `gemma-3-27b-it` through the Gemini API, prepare an env file containing `GEMINI_API_KEY=...` and pass it to the Part 3 runner with `-Provider gemini -ApiEnvFile path\to\api_keys.env`.
 
 ## Part 1
 
@@ -106,10 +112,34 @@ Place a substantial textual PDF in `test_inputs/pdf/`, then create a JSON input 
 
 Run the PDF version:
 
+Recommended:
+
+```powershell
+.\scripts\run_part3_pdf.ps1
+```
+
+This saves the logs automatically in `outputs/part3/`.
+
+For the additional Chapter 5 experiment:
+
+```powershell
+.\scripts\run_part3_chapter5.ps1
+```
+
+Optional Gemini/Gemma example:
+
+```powershell
+.\scripts\run_part3_pdf.ps1 -Provider gemini -ApiEnvFile ..\self_consistency_assignment\api_keys.env -LlmModel gemma-3-27b-it -EmbeddingModel qwen3-embedding:0.6b -ChunkSize 60 -ChunkOverlap 15 -OutputSubdir qwenembed__gemma27__c60
+```
+
+Manual alternative:
+
 ```powershell
 cd part3_pdf
 ..\.venv\Scripts\python OllamaPDFRAG.py --input-file ..\test_inputs\pdf\your_pdf_prompt.json
 ```
+
+The local file `part3_pdf/pdf_rag_input.json` is only a placeholder example. For the final assignment runs, use JSON files created for your selected PDF inside `test_inputs/pdf/`.
 
 Prepare 2-3 prompts:
 
@@ -125,6 +155,6 @@ Prepare 2-3 prompts:
 4. Repeat Part 3 with two embedding models:
    `qwen3-embedding:0.6b` and `all-minilm:latest`
 5. Repeat Part 3 with the available LLMs:
-   `deepseek-r1:1.5b`, `llama3.1:8b`, and optionally `qwen3.5:9b`
+   `deepseek-r1:1.5b`, `llama3.1:8b`, optionally `qwen3.5:9b`, and optionally `gemma-3-27b-it` through the Gemini API
 
 Use the report template in `report_material/tables_notes/report_template.md` as the base document.
