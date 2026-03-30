@@ -9,7 +9,7 @@ This repository is organized to mirror the three parts of Assignment 2 from Less
 - `part3_pdf/`: Part 3, PDF ingestion plus Top-K chunk retrieval.
 - `test_inputs/json_cases/`: the three JSON prompts requested by the assignment.
 - `test_inputs/pdf/`: place your thesis chapter PDF and its JSON input here.
-- `outputs/`: optional folder for saving terminal logs or notes.
+- `outputs/`: local folder used to store experiment logs generated while running the scripts. It is created and filled during execution and is not part of the final required deliverables.
 - `report_material/tables_notes/report_template.md`: draft structure for the 3-4 page report.
 
 ## Setup
@@ -37,6 +37,8 @@ ollama pull llama3.1:8b
 
 Run the base script on the three provided JSON cases.
 
+`part1_base` preserves the original single-document retrieval logic of the professor's script: it still retrieves only one document with `n_results=1`.
+
 Recommended:
 
 ```powershell
@@ -63,7 +65,17 @@ For each prompt, compare:
 
 ## Part 2
 
-Run the Top-K script on the same three JSON cases:
+Run the Top-K script on the same three JSON cases.
+
+Recommended:
+
+```powershell
+.\scripts\run_part2_topk.ps1
+```
+
+This saves the logs automatically in `outputs/part2/`.
+
+Manual alternative:
 
 ```powershell
 cd part2_topk

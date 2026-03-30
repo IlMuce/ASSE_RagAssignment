@@ -56,6 +56,8 @@ def embed_and_store_documents(collection, documents, embedding_model):
 
 def retrieve_context(collection, user_query, embedding_model, top_k):
     query_embedding = ollama.embed(model=embedding_model, input=user_query)
+    # Unlike the base script, this version asks Chroma for multiple ranked
+    # results so the answer can combine facts spread across different documents.
     results = collection.query(
         query_embeddings=query_embedding["embeddings"],
         n_results=top_k,
@@ -64,7 +66,7 @@ def retrieve_context(collection, user_query, embedding_model, top_k):
 
 
 def build_rag_prompt(user_query, retrieved_docs):
-    # The model now receives multiple relevant documents instead of only one.
+    # The final prompt aggregates the retrieved contexts in ranking order.
     formatted_context = "\n\n".join(
         f"[Context {index}] {document}"
         for index, document in enumerate(retrieved_docs, start=1)
@@ -82,6 +84,8 @@ def main():
 
     documents = data["documents"]
     user_query = data["user_query"]
+    # We cap Top-K to the number of available documents to avoid requesting
+    # more results than the collection can actually return.
     top_k = max(1, min(args.top_k, len(documents)))
 
     print("=== TOP-K RAG DEMO START ===\n")

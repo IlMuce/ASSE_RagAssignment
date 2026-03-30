@@ -54,9 +54,17 @@ The base script works in six main steps:
 
 | Prompt | Retrieved Context in Base Script | Retrieved Context in Top-K Script | Base Script Answer | Top-K Script Answer | Improvement |
 |---|---|---|---|---|---|
-| Prompt 1 |  |  |  |  |  |
-| Prompt 2 |  |  |  |  |  |
-| Prompt 3 |  |  |  |  |  |
+| `Report the number of people residing in Genoa.` | The base script retrieved only the age-distribution document, which did not contain the population value. | The Top-K version retrieved the age-distribution document, the population/gender document, and the GDP document. | The base script could not report the population because the retrieved context was incomplete. | The Top-K script correctly reported `563,947` residents because the relevant population document was included among the retrieved contexts. | Yes. Top-K improved the answer by recovering the relevant document even if it was not ranked first. |
+| `Are there more males than females in Genoa? And what is the distribution?` | The base script retrieved the gender-distribution document. | The Top-K version retrieved the gender-distribution document plus two additional less relevant documents. | The base script already answered correctly using the retrieved gender data. | The Top-K script also answered correctly. | Limited. In this case one document was already sufficient, so Top-K did not provide a substantial advantage. |
+| `Report the percentage of minors and pensioners in Genoa and the GDP per capita.` | The base script retrieved only the demographic document with minors and pensioners percentages. | The Top-K version retrieved the demographic document, the GDP document, and one additional population document. | The base script gave only a partial answer because GDP per capita was missing from the retrieved context. | The Top-K script correctly reported minors, pensioners, and GDP per capita. | Yes. Top-K improved the result because the answer required information coming from more than one document. |
+
+### 3.1 Top-K Discussion
+
+- The main advantage of Top-K retrieval appears when the answer depends on more than one source document.
+- In Prompt 1, Top-K fixed the failure of the base script by including the correct population document among the retrieved contexts.
+- In Prompt 2, Top-K did not significantly improve the result because the base version was already retrieving the correct document with `n_results=1`.
+- In Prompt 3, Top-K clearly improved the final answer because it allowed the model to combine demographic information and GDP information from two different documents.
+- Therefore, Top-K retrieval is more robust than the base version, especially for questions that require multi-document aggregation.
 
 ## 4. Part 3: PDF Experiments
 
